@@ -1,0 +1,17 @@
+{
+  "title": "1st Quiz",
+  "desc": "A Quiz to learn app working",
+  "type": "learn",
+  "questions": [
+    {
+      "question": "Batman's City ?",
+      "options": [
+        "New York",
+        "New Jersey",
+        "Gotham",
+        "Detroit",
+      ],
+      "answer": 2
+    }
+  ]
+}
