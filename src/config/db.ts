@@ -1,4 +1,4 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 import { envs } from '../utils/envs';
 import * as schema from "@/db/schema"
 

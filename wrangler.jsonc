@@ -1,0 +1,10 @@
+{
+  "name": "server",
+  "main": "src/index.ts",
+  "compatibility_date": "2022-07-12",
+  "dev": {
+    "ip": "192.168.29.57",
+    "port": 8787,
+    "local_protocol": "http"
+  }
+}

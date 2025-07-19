@@ -1,27 +1,31 @@
 {
   "name": "server",
   "scripts": {
-    "dev": "bun run --watch src/index.ts",
-    "auth:generate": "bunx @better-auth/cli@latest generate",
-    "auth:migrate": "bunx @better-auth/cli@latest migrate",
-    "db:migrate": "drizzle-kit migrate",
+    "dev": "wrangler dev",
+    "auth:generate": "bunx @better-auth/cli@latest generate --config ./better-auth.config.ts --output ./src/db/schema/auth.ts",
+    "cf:typegen": "wrangler types --env-interface CloudflareBindings",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:pull": "drizzle-kit pull"
+    "db:pull": "drizzle-kit pull",
+    "db:studio": "bunx drizzle-kit studio"
   },
   "dependencies": {
     "@better-auth/expo": "^1.2.12",
+    "@cloudflare/workers-types": "^4.20250715.0",
     "@hono/zod-validator": "^0.7.0",
-    "better-auth": "^1.2.10",
+    "@neondatabase/serverless": "^1.0.1",
+    "better-auth": "^1.2.12",
+    "country-state-city": "^3.2.1",
     "drizzle-orm": "^0.44.2",
-    "hono": "^4.8.3",
-    "pg": "^8.16.3",
-    "zod": "^3.25.67"
+    "hono": "^4.8.4",
+    "zod": "^3.25.75"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/pg": "^8.15.4",
     "drizzle-kit": "^0.31.4",
-    "tsx": "^4.20.3"
+    "tsx": "^4.20.3",
+    "wrangler": "^4.24.3"
   }
 }

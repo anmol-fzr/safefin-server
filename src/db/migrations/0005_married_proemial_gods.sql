@@ -1,0 +1,2 @@
+ALTER TABLE "question" ADD CONSTRAINT "question_quiz_id_quiz_id_fk" FOREIGN KEY ("quiz_id") REFERENCES "public"."quiz"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "question" ADD CONSTRAINT "question_answer_id_option_id_fk" FOREIGN KEY ("answer_id") REFERENCES "public"."option"("id") ON DELETE no action ON UPDATE no action;

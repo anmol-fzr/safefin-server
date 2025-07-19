@@ -1,0 +1,1 @@
+ALTER TABLE "question" ALTER COLUMN "answer_id" DROP NOT NULL;

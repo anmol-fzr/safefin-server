@@ -1,0 +1,1 @@
+ALTER TABLE "quiz_to_category" ALTER COLUMN "user_id" SET DATA TYPE text;

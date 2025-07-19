@@ -1,13 +1,16 @@
-import { createMiddleware } from 'hono/factory'
-import { auth } from "@/lib/auth"
+import { createFactory } from 'hono/factory'
+import { auth } from "@/lib/better-auth"
+import { HonoAppProps } from '..';
 
-const authenticate = createMiddleware(async (c, next) => {
-  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+const factory = createFactory<HonoAppProps>()
+
+const authenticate = factory.createMiddleware(async (c, next) => {
+  const session = await auth(c.env).api.getSession({ headers: c.req.raw.headers });
 
   if (!session) {
-    c.set("user", null);
-    c.set("session", null);
-    return next();
+    return c.json({
+      error: "Unauthorized"
+    }, 401)
   }
 
   c.set("user", session.user);
