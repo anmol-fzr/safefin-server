@@ -4,7 +4,7 @@ import * as schema from "@/db/schema"
 
 const getDb = (dbUrl: CloudflareBindings["DATABASE_URL"]): ReturnType<typeof drizzle> => {
   const sql = neon(dbUrl);
-  return drizzle(sql, { schema });
+  return drizzle({ client: sql, schema });
 }
 
 export { getDb }

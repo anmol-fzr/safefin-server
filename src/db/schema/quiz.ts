@@ -76,7 +76,7 @@ export const quizQuestionResult = pgTable("quiz_question_result", {
     .references(() => question.id)
     .notNull(),
   answeredId: integer("answered_id")
-    .references(() => question.id)
+    .references(() => option.id)
     .notNull(),
   userQuizResultId: integer("user_quiz_result_id")
     .references(() => userQuizResult.id)

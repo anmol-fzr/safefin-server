@@ -1,16 +1,11 @@
 import { Hono } from 'hono'
-import { showRoutes } from 'hono/dev'
 import { logger } from "hono/logger"
 import { cors } from "hono/cors";
 
 import { auth } from "@/lib/better-auth"
-import { getDb } from './lib/pg';
-import { user } from './db/schema';
-//import type { User, Session } from "@/lib/auth"
 import { quizRouter } from "@/router"
-// import { addressRouter } from './router/address.router';
-// import { questionRouter } from './router/question.router';
 import type { User, Session } from '@/lib/better-auth';
+import { authenticate } from './middleware';
 
 type HonoAppProps = {
   Variables: {
@@ -40,11 +35,8 @@ app.on(["POST", "GET"], "/api/auth/*", async (c) => {
   return auth(c.env).handler(c.req.raw);
 });
 
+app.use(authenticate)
 app.route("/quiz", quizRouter)
-// app.route("/question", questionRouter)
-// app.route("/address", addressRouter)
-showRoutes(app)
 
-//app.fire()
 export type { HonoAppProps }
 export default app;

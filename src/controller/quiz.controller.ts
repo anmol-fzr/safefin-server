@@ -1,14 +1,99 @@
-import { db } from "@/config/db";
-import { createFactory } from "hono/factory"
-import { option, question, quiz } from '@/db/schema/quiz'
-import { eq, inArray } from 'drizzle-orm'
+import { createFactory, } from "hono/factory"
+import { eq, desc } from "drizzle-orm"
+
+import type { HonoAppProps } from "..";
+import { getDb } from "@/lib/pg";
+import { option, question, quiz } from "@/db/schema";
 import { zValidator } from "@hono/zod-validator";
-import { fullQuizReqSchema, quizSchema } from "@/schema";
+import { fullQuizReqSchema } from "@/schema";
 
-const { createHandlers } = createFactory()
+const factory = createFactory<HonoAppProps>()
 
-const createFullQuizHndlr = createHandlers(zValidator("json", fullQuizReqSchema), async (c) => {
+const getQuizzes = factory.createHandlers(async (c) => {
+  const db = getDb(c.env.DATABASE_URL)
+
+  const quizzes = await db.select({
+    id: quiz.id,
+    title: quiz.title,
+    desc: quiz.desc,
+  }).from(quiz).where(eq(quiz.isPublished, true)).orderBy(desc(quiz.createdAt))
+
+  return c.json({ data: quizzes })
+})
+
+const getQuizById = factory.createHandlers(async (c) => {
+  const db = getDb(c.env.DATABASE_URL)
+  const quizId = c.req.param("quiz_id")
+
+  const quizs = await db.query.quiz.findFirst({
+    where: (quiz) => eq(quiz.id, quizId),
+    columns: {
+      isPublished: false,
+      createdAt: false,
+      updatedAt: false,
+    },
+    with: {
+      questions: {
+        columns: {
+          createdAt: false,
+          updatedAt: false,
+        },
+        with: {
+          options: {
+            columns: {
+              createdAt: false,
+              updatedAt: false,
+            }
+          },
+          answer: {
+            columns: {
+              createdAt: false,
+              updatedAt: false,
+            },
+          }
+        },
+      },
+    },
+  });
+
+  return c.json({ data: quizs })
+})
+
+const updateQuizById = factory.createHandlers(async (c) => {
+  const quizId = c.req.param("quiz_id")
+  const db = getDb(c.env.DATABASE_URL)
+
+  const updatedQuiz = await db.update(quiz).set({
+    isPublished: true
+  }).where(eq(quiz.id, quizId)).returning()
+
+  if (updatedQuiz.length === 0) {
+    return c.json({
+      data: null,
+      error: "Quiz Not Found",
+      message: "Quiz Doesn't Exists"
+    }, 404)
+  }
+
+  return c.json({ data: updatedQuiz[0], message: "Quiz Updated Successfully" })
+})
+
+const deleteQuizById = factory.createHandlers(async (c) => {
+  const quizId = c.req.param("quiz_id")
+  const db = getDb(c.env.DATABASE_URL)
+
+  const foundQuiz = db.select().from(quiz).where(eq(quiz.id, quizId)).limit(1)
+
+  // const quiz = await db.query.quiz.findFirst({
+  //   where: (quiz) => eq(quiz.id, quizId),
+  // })
+
+  return c.json({ data: foundQuiz })
+})
+
+const createQuiz = factory.createHandlers(zValidator("json", fullQuizReqSchema), async (c) => {
   const body = c.req.valid("json");
+  const db = getDb(c.env.DATABASE_URL)
 
   try {
     const newQuiz = await db.transaction(async (tx) => {
@@ -48,87 +133,11 @@ const createFullQuizHndlr = createHandlers(zValidator("json", fullQuizReqSchema)
 
       return insertedQuiz[0]; // return full quiz object
     });
-
     return c.json({ data: newQuiz });
   } catch (error) {
     console.error("Transaction failed:", error);
     return c.json({ success: false, error: error.message }, 500);
   }
-});
-
-const getAllQuizHndlr = createHandlers(async (c) => {
-  const result = await db.query.quiz.findMany();
-
-  return c.json({ data: result })
 })
 
-
-const getQuizByIdHndlr = createHandlers(async (c) => {
-  const { id } = c.req.param();
-
-  // Step 1: Get the quiz
-  const quizData = await db.query.quiz.findFirst({
-    where: eq(quiz.id, id),
-    columns: {
-      createdAt: false,
-      updatedAt: false,
-    },
-  });
-
-  if (!quizData) return c.json({ error: "Quiz not found" }, 404);
-
-  // Step 2: Get all questions for the quiz
-  const questions = await db.query.question.findMany({
-    where: eq(question.quizId, id),
-    columns: {
-      createdAt: false,
-      updatedAt: false,
-    },
-  });
-
-  const questionIds = questions.map(q => q.id);
-
-  // Step 3: Get all options for these questions
-  const options = await db.query.option.findMany({
-    where: inArray(option.question_id, questionIds),
-    columns: {
-      createdAt: false,
-      updatedAt: false,
-    },
-  });
-
-  // Step 4: Group options by question_id
-  const optionsByQuestionId = new Map<number, typeof options>();
-
-  for (const opt of options) {
-    if (!optionsByQuestionId.has(opt.question_id)) {
-      optionsByQuestionId.set(opt.question_id, []);
-    }
-    optionsByQuestionId.get(opt.question_id)!.push(opt);
-  }
-
-  // Step 5: Attach options to each question
-  const questionsWithOptions = questions.map((q) => ({
-    ...q,
-    options: optionsByQuestionId.get(q.id) || [],
-  }));
-
-  // Step 6: Construct response
-  const response = {
-    ...quizData,
-    questions: questionsWithOptions,
-  };
-
-  return c.json({ data: response });
-});
-
-const newQuizHndlr = createHandlers(zValidator("json", quizSchema), async (c) => {
-  const body = c.req.valid("json")
-
-  const newQuiz = await db.insert(quiz).values(body).returning();
-
-
-  return c.json(newQuiz)
-})
-
-export { getAllQuizHndlr, getQuizByIdHndlr, newQuizHndlr, createFullQuizHndlr }
+export { getQuizzes, getQuizById, createQuiz, updateQuizById, deleteQuizById }
